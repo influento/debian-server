@@ -5,7 +5,9 @@ if [[ -d /root/debian-install ]] && [[ -z "${_INSTALLER_SHOWN:-}" ]]; then
   printf '\n'
   printf '\033[1;36m  ===  Custom Debian Server Installer  ===\033[0m\n'
   printf '\n'
-  printf '  Run:  \033[1mbash /root/debian-install/install.sh\033[0m\n'
+  printf '  Run:  \033[1mbash /root/debian-install/start.sh\033[0m\n'
   printf '  Help: \033[1mbash /root/debian-install/install.sh --help\033[0m\n'
+  printf '\n'
+  bash /root/debian-install/start.sh
   printf '\n'
 fi
