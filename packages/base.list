@@ -1,0 +1,51 @@
+# packages/base.list — Core system packages (installed via debootstrap + apt)
+# Debootstrap installs a minimal system. These are the additional base packages.
+
+# Kernel and firmware
+linux-image-amd64
+linux-headers-amd64
+firmware-linux
+
+# CPU microcode (both included, only matching CPU loads at boot)
+amd64-microcode
+intel-microcode
+
+# Essential system tools
+build-essential
+sudo
+locales
+network-manager
+systemd-resolved
+
+# Shell
+zsh
+
+# Editor
+neovim
+
+# Filesystem tools
+e2fsprogs
+dosfstools
+
+# Boot
+efibootmgr
+grub-efi-amd64
+
+# Hardware detection
+pciutils
+usbutils
+
+# Docs
+man-db
+manpages
+
+# Misc essentials
+git
+curl
+wget
+less
+unzip
+tar
+bash-completion
+ca-certificates
+gnupg

@@ -1,0 +1,19 @@
+# Claude Code local settings
+.claude/settings.local.json
+
+# Installation logs
+*.log
+
+# Downloaded ISOs
+tests/iso/
+
+# ISO build artifacts
+iso/out/
+iso/work/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~

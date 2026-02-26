@@ -1,0 +1,2 @@
+# Extra packages added to the custom ISO beyond the base set.
+# One package per line. Comments with #. Blank lines ignored.

@@ -1,0 +1,20 @@
+# packages/server.list — Server-specific packages
+
+# SSH
+openssh-server
+
+# Firewall
+nftables
+
+# Security
+fail2ban
+
+# Monitoring
+htop
+
+# Docker — installed separately via modules/docker.sh (official Docker repo)
+# docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin
+
+# Utilities
+tmux
+rsync
