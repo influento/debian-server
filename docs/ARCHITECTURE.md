@@ -20,6 +20,7 @@
 
 ```
 debian-server/
+├── start.sh                     # Interactive launcher (install/test/dry-run menu)
 ├── install.sh                   # Entry point
 ├── config.sh                    # Default config variables
 ├── lib/
@@ -57,15 +58,18 @@ debian-server/
 ## Execution Flow
 
 ```
-install.sh
-  ├── Preflight checks (root, UEFI, network, disks)
-  ├── Gather config (username, hostname, disk)
-  ├── Disk setup (GPT: EFI + Swap + Root)
-  ├── Debootstrap + fstab
-  ├── [chroot] System config (apt, locale, hostname, DNS, initramfs, GRUB, users)
-  ├── [chroot] Server profile (dotfiles, packages, SSH, firewall, Docker)
-  ├── Post-chroot fixups (resolv.conf symlink)
-  └── Cleanup + reboot prompt
+start.sh (auto-launches on ISO boot)
+  └── install.sh
+        ├── Preflight checks (root, UEFI, network, disks)
+        ├── Gather ALL input (username, hostname, disk, passwords)
+        ├── Summary + confirm
+        ├── Disk setup (GPT: EFI + Swap + Root)
+        ├── Debootstrap + fstab
+        ├── Write password file → chroot
+        ├── [chroot] System config (apt, locale, hostname, DNS, initramfs, GRUB, users)
+        ├── [chroot] Server profile (dotfiles, packages, SSH, firewall, Docker)
+        ├── Post-chroot fixups (resolv.conf symlink)
+        └── Cleanup + auto-reboot
 ```
 
 Everything after debootstrap runs inside chroot. The `lib/chroot.sh` wrapper copies

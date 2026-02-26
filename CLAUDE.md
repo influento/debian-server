@@ -27,8 +27,8 @@ docker run --rm --privileged -v "$(pwd)":/build -v debian-iso-cache:/cache debia
 # Create Hyper-V test VM (elevated PowerShell)
 .\tests\create-vm.ps1
 
-# Run installer (from live ISO)
-bash /root/debian-install/install.sh --config /root/debian-install/tests/vm-server.conf
+# Run installer (from live ISO — launcher auto-starts on login)
+bash /root/debian-install/start.sh
 ```
 
 ## What Gets Installed
@@ -45,12 +45,13 @@ htop, tmux, rsync.
 - **SSH**: hardened config in `/etc/ssh/sshd_config.d/10-hardened.conf`
 - **Firewall**: nftables — drop incoming, allow SSH/ICMP/established, allow outgoing
 - **Docker**: Docker CE from official repo, user added to docker group
-- **User**: root + non-root user with sudo group, zsh shell
+- **User**: root + non-root user with sudo group (NOPASSWD), zsh shell
 - **Dotfiles**: deployed from `DOTFILES_REPO` to `~/.dotfiles`, runs `install.sh --profile server`
 
 ## File Organization
 
 ```
+start.sh                Interactive launcher (install / test / dry-run menu)
 install.sh              Entry point
 config.sh               Default variables
 lib/                    Core libraries (log, ui, checks, disk, bootstrap, configure, chroot, packages, services)
