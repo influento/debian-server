@@ -110,21 +110,27 @@ configure_bootloader() {
 configure_users() {
   log_section "User Setup"
 
+  # Read passwords from temp file created by install.sh
+  local pass_file="/root/.install-passwords"
+  if [[ ! -f "$pass_file" ]]; then
+    die "Password file not found — expected $pass_file from install.sh."
+  fi
+
+  local root_pass user_pass
+  { read -r root_pass; read -r user_pass; } < "$pass_file"
+  rm -f "$pass_file"
+
   # Root password
-  log_info "Set the root password:"
-  local root_pass
-  root_pass=$(prompt_password "Root password")
   echo "root:${root_pass}" | chpasswd
+  root_pass=""
   log_info "Root password set."
 
   # Non-root user
   log_info "Creating user: $USERNAME"
   useradd -m -G sudo -s /usr/bin/zsh "$USERNAME"
 
-  log_info "Set password for $USERNAME:"
-  local user_pass
-  user_pass=$(prompt_password "Password for $USERNAME")
   echo "${USERNAME}:${user_pass}" | chpasswd
+  user_pass=""
   log_info "User $USERNAME created."
 }
 
@@ -132,10 +138,10 @@ configure_sudo() {
   log_info "Configuring sudo..."
 
   # On Debian, the sudo group is used instead of wheel
-  # Ensure sudo group has permissions (should be default, but verify)
-  if ! grep -q '^%sudo' /etc/sudoers; then
-    echo '%sudo ALL=(ALL:ALL) ALL' >> /etc/sudoers
-  fi
+  # NOPASSWD so interactive installs and package scripts never prompt
+  mkdir -p /etc/sudoers.d
+  echo '%sudo ALL=(ALL:ALL) NOPASSWD: ALL' > /etc/sudoers.d/01-sudo-nopasswd
+  chmod 440 /etc/sudoers.d/01-sudo-nopasswd
 
   # Set default editor for visudo
   mkdir -p /etc/sudoers.d

@@ -19,9 +19,9 @@ part_prefix() {
 setup_disk() {
   log_section "Disk Setup"
 
-  # Select disk if not set
+  # Disk must be set by install.sh upfront phase
   if [[ -z "$TARGET_DISK" ]]; then
-    TARGET_DISK=$(select_disk)
+    die "TARGET_DISK not set — disk selection should happen before setup_disk."
   fi
   log_info "Target disk: $TARGET_DISK"
 
@@ -31,9 +31,7 @@ setup_disk() {
     log_info "Swap size (server default): $SWAP_SIZE"
   fi
 
-  # Safety confirmation
   log_warn "ALL DATA ON $TARGET_DISK WILL BE DESTROYED."
-  confirm "Proceed with partitioning $TARGET_DISK?" || die "Aborted by user."
 
   partition_disk
   format_partitions

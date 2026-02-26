@@ -107,9 +107,14 @@ log_info "Timezone: $TIMEZONE"
 log_info "Debian release: $DEBIAN_RELEASE"
 
 # Disk selection (interactive if not set)
-if [[ -n "$TARGET_DISK" ]]; then
-  log_info "Target disk (from CLI): $TARGET_DISK"
+if [[ -z "$TARGET_DISK" ]]; then
+  TARGET_DISK=$(select_disk)
 fi
+log_info "Target disk: $TARGET_DISK"
+
+# Passwords
+_ROOT_PASS=$(prompt_password "Root password")
+_USER_PASS=$(prompt_password "Password for $USERNAME")
 
 # --- Show summary and confirm ---
 
@@ -123,15 +128,21 @@ print_summary \
   "Swap=${SWAP_SIZE}" \
   "Bootloader=$BOOTLOADER" \
   "Debian=${DEBIAN_RELEASE}" \
-  "Disk=${TARGET_DISK:-<will be selected>}" \
+  "Disk=${TARGET_DISK}" \
   "Dotfiles=${DOTFILES_REPO:-<none>}"
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
+  _ROOT_PASS="" _USER_PASS=""
+  unset _ROOT_PASS _USER_PASS
   log_info "Dry run — exiting before making changes."
   exit 0
 fi
 
-confirm "Proceed with installation?" || die "Aborted by user."
+if ! confirm "Proceed with installation?"; then
+  _ROOT_PASS="" _USER_PASS=""
+  unset _ROOT_PASS _USER_PASS
+  die "Aborted by user."
+fi
 
 # ===================================================================
 #  Phase 1: Disk + Base System (live ISO environment)
@@ -145,6 +156,13 @@ bootstrap_base_system
 # ===================================================================
 
 mount_chroot_filesystems
+
+# Pass passwords into chroot via temp file (mode 0600, deleted after use)
+_PASS_FILE="${MOUNT_POINT}/root/.install-passwords"
+printf '%s\n%s\n' "$_ROOT_PASS" "$_USER_PASS" > "$_PASS_FILE"
+chmod 600 "$_PASS_FILE"
+_ROOT_PASS="" _USER_PASS=""
+unset _ROOT_PASS _USER_PASS
 
 run_in_chroot "lib/configure.sh" "configure_system" "enable_base_services"
 
@@ -181,11 +199,8 @@ log_info "Log saved to: ${MOUNT_POINT}${LOG_FILE}"
 # Copy log into the installed system
 cp "$LOG_FILE" "${MOUNT_POINT}${LOG_FILE}" 2>/dev/null || true
 
-if confirm "Reboot now?"; then
-  swapoff -a 2>/dev/null || true
-  umount -R "$MOUNT_POINT" 2>/dev/null || true
-  reboot
-else
-  log_info "You can reboot manually when ready."
-  log_info "Don't forget to: umount -R ${MOUNT_POINT} && reboot"
-fi
+log_info "Rebooting in 5 seconds..."
+sleep 5
+swapoff -a 2>/dev/null || true
+umount -R "$MOUNT_POINT" 2>/dev/null || true
+reboot

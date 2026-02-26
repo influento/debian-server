@@ -76,7 +76,6 @@ CHROOT_EOF
   )
 
   # Write wrapper to a file and execute it (instead of piping to bash).
-  # Piping consumes stdin, which breaks interactive prompts (passwords, etc.).
   local wrapper_file="${MOUNT_POINT}${chroot_installer}/.chroot-wrapper.sh"
   printf '%s' "$wrapper" > "$wrapper_file"
   chmod +x "$wrapper_file"
@@ -108,6 +107,13 @@ umount_chroot_filesystems() {
 
 # Cleanup the installer copy from the chroot
 cleanup_chroot() {
+  # Safety net: remove password file if configure_users failed to delete it
+  local pass_file="${MOUNT_POINT}/root/.install-passwords"
+  if [[ -f "$pass_file" ]]; then
+    log_warn "Password file still exists — removing it now."
+    rm -f "$pass_file"
+  fi
+
   local chroot_installer="${MOUNT_POINT}/root/debian-install"
   if [[ -d "$chroot_installer" ]]; then
     log_debug "Cleaning up installer copy from chroot"
