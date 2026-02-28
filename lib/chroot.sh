@@ -58,6 +58,8 @@ export PART_SWAP="${PART_SWAP:-}"
 export PART_ROOT="${PART_ROOT:-}"
 export DOTFILES_REPO="${DOTFILES_REPO:-}"
 export DOTFILES_DEST="${DOTFILES_DEST:-}"
+export AUTO_MODE="${AUTO_MODE:-0}"
+export MIRROR_COUNTRY="${MIRROR_COUNTRY:-}"
 export PROFILE="server"
 export DEBUG="${DEBUG:-0}"
 

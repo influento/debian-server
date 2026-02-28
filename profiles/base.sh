@@ -18,9 +18,12 @@ deploy_dotfiles() {
     return 0
   fi
 
-  local dest="${DOTFILES_DEST:-/home/${USERNAME}/.dotfiles}"
+  local dest="${DOTFILES_DEST:-/home/${USERNAME}/dev/infra/dotfiles}"
 
   log_info "Deploying dotfiles to ${dest}..."
+
+  # Ensure parent directory exists
+  mkdir -p "$(dirname "$dest")"
 
   if [[ -d "/root/dotfiles" ]]; then
     # Custom ISO flow: bundled dotfiles already present
@@ -44,7 +47,7 @@ deploy_dotfiles() {
   fi
 
   # Fix ownership (we're running as root in chroot)
-  chown -R "${USERNAME}:${USERNAME}" "$dest"
+  chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/dev"
 
   # Run the dotfiles installer if present
   if [[ -f "${dest}/install.sh" ]]; then

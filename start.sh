@@ -16,11 +16,12 @@ printf '\n'
 printf '  %b1)%b Install          — full interactive install\n' "$_B" "$_R"
 printf '  %b2)%b Test (VM)        — pre-filled config, smaller swap\n' "$_B" "$_R"
 printf '  %b3)%b Test dry-run     — pre-filled config, no changes\n' "$_B" "$_R"
-printf '  %b4)%b Custom           — pass your own flags\n' "$_B" "$_R"
+printf '  %b4)%b Test (auto)      — pre-filled config, unattended\n' "$_B" "$_R"
+printf '  %b5)%b Custom           — pass your own flags\n' "$_B" "$_R"
 printf '\n'
 
 while true; do
-  printf '%b::%b Choose an option [1-4]: ' "$_Y" "$_R"
+  printf '%b::%b Choose an option [1-5]: ' "$_Y" "$_R"
   read -r choice
   case "$choice" in
     1)
@@ -33,6 +34,9 @@ while true; do
       exec bash "${INSTALLER_DIR}/install.sh" --config "${INSTALLER_DIR}/tests/vm-server.conf" --dry-run
       ;;
     4)
+      exec bash "${INSTALLER_DIR}/install.sh" --config "${INSTALLER_DIR}/tests/vm-server.conf" --auto
+      ;;
+    5)
       printf '\n  Enter flags (e.g. --disk /dev/sda --hostname mybox):\n'
       printf '%b::%b ' "$_Y" "$_R"
       read -r flags

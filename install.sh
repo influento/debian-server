@@ -37,7 +37,9 @@ Options:
   --swap SIZE           Swap size (default: 8G)
   --release CODENAME    Debian release codename (default: trixie)
   --dotfiles URL        Dotfiles git repo URL
+  --mirror-country CC   2-letter country code for mirrors (e.g. US, DE)
   --config FILE         Source a config file with variable overrides
+  --auto                Unattended mode (skip confirmations, use PASSWORD var)
   --dry-run             Show what would be done without making changes
   --debug               Enable debug output
   --help                Show this help message
@@ -59,8 +61,10 @@ while [[ $# -gt 0 ]]; do
     --swap)        SWAP_SIZE="$2"; shift 2 ;;
     --release)     DEBIAN_RELEASE="$2"; shift 2 ;;
     --dotfiles)    DOTFILES_REPO="$2"; shift 2 ;;
+    --mirror-country) MIRROR_COUNTRY="$2"; shift 2 ;;
     --config)      # shellcheck source=/dev/null
                    source "$2"; shift 2 ;;
+    --auto)        AUTO_MODE=1; shift ;;
     --dry-run)     DRY_RUN=1; shift ;;
     --debug)       DEBUG=1; shift ;;
     --help)        usage ;;
@@ -79,12 +83,46 @@ log_info "Log file: $LOG_FILE"
 
 run_preflight_checks
 
+# --- Detect geo location (mirror country) ---
+
+if [[ -z "$MIRROR_COUNTRY" ]]; then
+  log_info "Detecting location..."
+  _geo_json="$(curl -sf --max-time 5 "https://ipapi.co/json/" 2>/dev/null)" || _geo_json=""
+
+  # Fallback to ip-api.com
+  if [[ -z "$_geo_json" ]]; then
+    _geo_json="$(curl -sf --max-time 5 "http://ip-api.com/json/?fields=countryCode" 2>/dev/null)" || _geo_json=""
+  fi
+
+  _GEO_COUNTRY=""
+  if [[ -n "$_geo_json" ]]; then
+    # ipapi.co uses "country_code", ip-api.com uses "countryCode" — try both
+    _GEO_COUNTRY="$(printf '%s' "$_geo_json" | sed -n 's/.*"country_code": *"\([^"]*\)".*/\1/p')"
+    [[ -z "$_GEO_COUNTRY" ]] && _GEO_COUNTRY="$(printf '%s' "$_geo_json" | sed -n 's/.*"countryCode": *"\([^"]*\)".*/\1/p')"
+  fi
+
+  # Validate country code (exactly 2 uppercase letters)
+  if [[ ! "${_GEO_COUNTRY:-}" =~ ^[A-Z]{2}$ ]]; then
+    _GEO_COUNTRY=""
+  fi
+
+  if [[ -n "$_GEO_COUNTRY" ]]; then
+    MIRROR_COUNTRY="$_GEO_COUNTRY"
+    log_info "Detected mirror country: $MIRROR_COUNTRY"
+  else
+    log_warn "Could not detect location."
+  fi
+fi
+
 # --- Gather configuration interactively ---
 
 log_section "Configuration"
 
 # Username
 if [[ -z "$USERNAME" ]]; then
+  if [[ "$AUTO_MODE" -eq 1 ]]; then
+    die "AUTO_MODE requires USERNAME to be set via --user or config file."
+  fi
   USERNAME=$(prompt_input "Enter non-root username" "")
   while [[ -z "$USERNAME" ]]; do
     log_warn "Username cannot be empty."
@@ -95,9 +133,13 @@ log_info "Username: $USERNAME"
 
 # Hostname
 if [[ -z "$HOSTNAME" ]]; then
-  local_suffix=$(prompt_input "Enter hostname suffix (e.g. home, lab, prod)" "")
-  if [[ -z "$local_suffix" ]]; then
+  if [[ "$AUTO_MODE" -eq 1 ]]; then
     local_suffix="$(head -c 2 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+  else
+    local_suffix=$(prompt_input "Enter hostname suffix (e.g. home, lab, prod)" "")
+    if [[ -z "$local_suffix" ]]; then
+      local_suffix="$(head -c 2 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+    fi
   fi
   HOSTNAME="${USERNAME}-server-${local_suffix}"
 fi
@@ -108,13 +150,24 @@ log_info "Debian release: $DEBIAN_RELEASE"
 
 # Disk selection (interactive if not set)
 if [[ -z "$TARGET_DISK" ]]; then
+  if [[ "$AUTO_MODE" -eq 1 ]]; then
+    die "AUTO_MODE requires TARGET_DISK to be set via --disk or config file."
+  fi
   TARGET_DISK=$(select_disk)
 fi
 log_info "Target disk: $TARGET_DISK"
 
 # Passwords
-_ROOT_PASS=$(prompt_password "Root password")
-_USER_PASS=$(prompt_password "Password for $USERNAME")
+if [[ -n "${PASSWORD:-}" ]]; then
+  # PASSWORD set via config/env (e.g. test runs) — use for both
+  _ROOT_PASS="$PASSWORD"
+  _USER_PASS="$PASSWORD"
+elif [[ "$AUTO_MODE" -eq 1 ]]; then
+  die "AUTO_MODE requires PASSWORD to be set via config file or environment."
+else
+  _ROOT_PASS=$(prompt_password "Root password")
+  _USER_PASS=$(prompt_password "Password for $USERNAME")
+fi
 
 # --- Show summary and confirm ---
 

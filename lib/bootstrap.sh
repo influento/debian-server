@@ -9,6 +9,20 @@ bootstrap_base_system() {
     die "debootstrap not found. Install it first: apt-get install -y debootstrap"
   fi
 
+  # Determine mirror URL (country mirror with CDN fallback)
+  local mirror_url="http://deb.debian.org/debian"
+  if [[ -n "${MIRROR_COUNTRY:-}" ]]; then
+    local cc_lower
+    cc_lower="$(printf '%s' "$MIRROR_COUNTRY" | tr '[:upper:]' '[:lower:]')"
+    local country_mirror="http://ftp.${cc_lower}.debian.org/debian"
+    if curl -sf --max-time 5 -o /dev/null "${country_mirror}/dists/${DEBIAN_RELEASE}/Release" 2>/dev/null; then
+      mirror_url="$country_mirror"
+      log_info "Using country mirror: $mirror_url"
+    else
+      log_warn "Country mirror unreachable, using CDN: $mirror_url"
+    fi
+  fi
+
   log_info "Bootstrapping Debian ${DEBIAN_RELEASE} to ${MOUNT_POINT}..."
 
   run_logged "Running debootstrap" \
@@ -17,7 +31,7 @@ bootstrap_base_system() {
       --components=main,contrib,non-free-firmware \
       "${DEBIAN_RELEASE}" \
       "${MOUNT_POINT}" \
-      "http://deb.debian.org/debian"
+      "$mirror_url"
 
   log_info "Generating fstab..."
   generate_fstab

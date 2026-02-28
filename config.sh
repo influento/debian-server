@@ -12,6 +12,10 @@ EFI_SIZE="${EFI_SIZE:-1G}"                    # EFI system partition size
 ROOT_SIZE="${ROOT_SIZE:-}"                    # Server: rest of disk (empty = use all remaining)
 SWAP_SIZE="${SWAP_SIZE:-8G}"                  # Server default: 8G
 
+# --- Install mode ---
+AUTO_MODE="${AUTO_MODE:-0}"                   # 1 = unattended mode (skip confirmations)
+PASSWORD="${PASSWORD:-}"                      # used in --auto mode for both root + user
+
 # --- System ---
 HOSTNAME="${HOSTNAME:-}"                      # prompted if empty; pattern: {username}-server-{suffix}
 USERNAME="${USERNAME:-}"                       # non-root user (prompted if empty)
@@ -26,9 +30,12 @@ BOOTLOADER="${BOOTLOADER:-grub}"             # GRUB (UEFI only)
 EDITOR="${EDITOR:-nvim}"                      # default editor for visudo, git, etc.
 ENABLE_DOCKER="${ENABLE_DOCKER:-true}"        # install Docker CE
 
+# --- Mirrors ---
+MIRROR_COUNTRY="${MIRROR_COUNTRY:-}"          # 2-letter country code for mirrors (auto-detected)
+
 # --- Dotfiles ---
 DOTFILES_REPO="${DOTFILES_REPO:-}"             # git URL (empty = skip dotfiles)
-DOTFILES_DEST="${DOTFILES_DEST:-}"             # auto-set to /home/$USERNAME/.dotfiles
+DOTFILES_DEST="${DOTFILES_DEST:-}"             # auto-set to /home/$USERNAME/dev/infra/dotfiles
 
 # --- Paths (internal, don't override) ---
 # shellcheck disable=SC2034 # INSTALLER_DIR is used by install.sh and chroot wrapper

@@ -19,10 +19,24 @@ configure_system() {
 configure_apt() {
   log_info "Configuring apt..."
 
+  # Determine mirror (country mirror with CDN fallback)
+  local mirror="deb.debian.org"
+  if [[ -n "${MIRROR_COUNTRY:-}" ]]; then
+    local cc_lower
+    cc_lower="$(printf '%s' "$MIRROR_COUNTRY" | tr '[:upper:]' '[:lower:]')"
+    local country_mirror="ftp.${cc_lower}.debian.org"
+    if curl -sf --max-time 5 -o /dev/null "http://${country_mirror}/debian/dists/${DEBIAN_RELEASE}/Release" 2>/dev/null; then
+      mirror="$country_mirror"
+      log_info "Using country mirror: $mirror"
+    else
+      log_warn "Country mirror unreachable, using CDN: $mirror"
+    fi
+  fi
+
   cat > /etc/apt/sources.list <<EOF
-deb http://deb.debian.org/debian ${DEBIAN_RELEASE} main contrib non-free-firmware
+deb http://${mirror}/debian ${DEBIAN_RELEASE} main contrib non-free-firmware
 deb http://deb.debian.org/debian-security ${DEBIAN_RELEASE}-security main contrib non-free-firmware
-deb http://deb.debian.org/debian ${DEBIAN_RELEASE}-updates main contrib non-free-firmware
+deb http://${mirror}/debian ${DEBIAN_RELEASE}-updates main contrib non-free-firmware
 EOF
 
   run_logged "Updating package lists" apt-get update

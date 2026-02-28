@@ -25,6 +25,13 @@ prompt_input() {
 # Usage: result=$(prompt_password "Enter root password")
 prompt_password() {
   local prompt_text="$1"
+
+  # Auto mode: use PASSWORD if available
+  if [[ "${AUTO_MODE:-0}" -eq 1 && -n "${PASSWORD:-}" ]]; then
+    printf '%s' "$PASSWORD"
+    return 0
+  fi
+
   local pass1 pass2
 
   while true; do
@@ -56,6 +63,13 @@ prompt_password() {
 # Usage: confirm "Wipe /dev/sda?" || exit 1
 confirm() {
   local prompt_text="$1"
+
+  # Auto mode: skip confirmation
+  if [[ "${AUTO_MODE:-0}" -eq 1 ]]; then
+    log_info "Auto mode: $prompt_text → yes"
+    return 0
+  fi
+
   local response
 
   printf '%b:: %b%s [y/N]: ' "$_CLR_YELLOW" "$_CLR_RESET" "$prompt_text" >&2
