@@ -85,6 +85,10 @@ docs/                   TODO.md, ARCHITECTURE.md
 ## Git
 
 - Do NOT add `Co-Authored-By` trailers to commits
+- Before every commit/push, audit the staged diff for sensitive information leaks:
+  usernames, passwords, API keys, tokens, private IPs, email addresses, or any
+  data that should not appear in a public repository. Flag any findings to the user
+  before proceeding
 
 ## Debian Version
 
