@@ -48,8 +48,13 @@ debian-server/
 │   ├── build.sh                 # ISO build script (Docker volume cache)
 │   └── overlay/                 # Extra packages, motd, welcome banner
 ├── tests/
-│   ├── vm-server.conf           # Pre-filled test config
-│   └── create-vm.ps1            # Hyper-V VM creation script
+│   ├── linux/
+│   │   ├── create-vm.sh         # QEMU/KVM VM creation script
+│   │   └── download-iso.sh      # Debian ISO downloader + verifier
+│   ├── windows/
+│   │   └── create-vm.ps1        # Hyper-V VM creation script
+│   ├── vm-server.conf           # Shared test config
+│   └── README.md                # Testing instructions
 └── docs/
     ├── TODO.md
     └── ARCHITECTURE.md

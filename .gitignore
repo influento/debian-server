@@ -7,6 +7,9 @@
 # Downloaded ISOs
 tests/iso/
 
+# VM disk images
+tests/vm/
+
 # ISO build artifacts
 iso/out/
 iso/work/

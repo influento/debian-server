@@ -25,7 +25,11 @@ docker run --rm --privileged -v "$(pwd)":/build -v debian-iso-cache:/cache debia
 # Output: iso/out/debian-server-custom-YYYY.MM.DD-amd64.iso
 
 # Create Hyper-V test VM (elevated PowerShell)
-.\tests\create-vm.ps1
+.\tests\windows\create-vm.ps1
+
+# Download Debian ISO + create QEMU/KVM test VM (Linux)
+./tests/linux/download-iso.sh
+./tests/linux/create-vm.sh
 
 # Run installer (from live ISO — launcher auto-starts on login)
 bash /root/debian-install/start.sh
@@ -60,7 +64,7 @@ profiles/server.sh      Server profile orchestrator
 modules/                SSH, firewall, Docker
 packages/               Package lists (base.list, server.list)
 iso/                    Custom ISO builder (Dockerfile, build.sh, overlay/)
-tests/                  VM config (vm-server.conf, create-vm.ps1)
+tests/                  VM testing (linux/, windows/, vm-server.conf)
 docs/                   TODO.md, ARCHITECTURE.md
 ```
 
