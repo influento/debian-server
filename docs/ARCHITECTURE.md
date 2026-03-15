@@ -20,7 +20,7 @@
 
 ```
 debian-server/
-├── start.sh                     # Interactive launcher (install/test/dry-run menu)
+├── start.sh                     # Interactive launcher (install/test/shell menu)
 ├── install.sh                   # Entry point
 ├── config.sh                    # Default config variables
 ├── lib/
@@ -95,7 +95,7 @@ scripts, and cleans up after.
 | `SWAP_SIZE` | `8G` | Swap partition size |
 | `ENABLE_DOCKER` | `true` | Install Docker CE |
 | `DOTFILES_REPO` | *(empty)* | Dotfiles git URL (empty = skip) |
-| `DOTFILES_DEST` | *(auto)* | `/home/$USERNAME/.dotfiles` |
+| `DOTFILES_DEST` | *(auto)* | `/home/$USERNAME/dev/infra/dotfiles` |
 
 Precedence: CLI flags > config file (`--config`) > `config.sh` defaults.
 

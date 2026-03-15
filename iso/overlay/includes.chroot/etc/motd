@@ -2,11 +2,11 @@
   Custom Debian Server Installer ISO
 
   To start the installer:
-    bash /root/debian-install/install.sh
+    bash /root/debian-install/start.sh
 
   For options:
     bash /root/debian-install/install.sh --help
 
-  VM testing (server):
-    bash /root/debian-install/install.sh --config /root/debian-install/tests/vm-server.conf
+  SSH into this live ISO (root:root):
+    ssh -p 2223 root@<host-ip>
 

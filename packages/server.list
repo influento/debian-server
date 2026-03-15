@@ -10,7 +10,7 @@ nftables
 fail2ban
 
 # Monitoring
-htop
+btop
 
 # Docker — installed separately via modules/docker.sh (official Docker repo)
 # docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin
@@ -18,3 +18,12 @@ htop
 # Utilities
 tmux
 rsync
+
+# CLI essentials
+fzf
+ripgrep
+bat
+eza
+fd-find
+zoxide
+shellcheck

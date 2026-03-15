@@ -51,7 +51,7 @@ lb config \
   --archive-areas "main contrib non-free-firmware" \
   --debian-installer none \
   --memtest none \
-  --bootappend-live "boot=live components username=root" \
+  --bootappend-live "boot=live components username=root console=tty0 console=ttyS0,115200" \
   --iso-application "$ISO_LABEL" \
   --iso-volume "$ISO_LABEL"
 
@@ -87,6 +87,7 @@ live_packages=(
   sudo
   neovim
   less
+  openssh-server
 )
 
 for pkg in "${live_packages[@]}"; do
@@ -142,8 +143,52 @@ if [[ -d "${OVERLAY_DIR}/includes.chroot" ]]; then
   log_detail "Overlay files applied"
 fi
 
+# Set root password for live ISO (password: root)
+# This is a live-build hook that runs inside the chroot during ISO creation
+mkdir -p config/hooks/live
+cat > config/hooks/live/01-root-password.hook.chroot <<'HOOK'
+#!/bin/sh
+echo "root:root" | chpasswd
+HOOK
+chmod +x config/hooks/live/01-root-password.hook.chroot
+log_detail "Root password set to 'root' for live ISO"
+
 # Ensure installer is executable
 chmod +x "config/includes.chroot/root/debian-install/install.sh"
+
+# GRUB: auto-boot after 3 seconds (no manual intervention needed)
+# Provide full config.cfg — live-build copies includes.binary/ into the ISO
+mkdir -p config/includes.binary/boot/grub
+cat > config/includes.binary/boot/grub/config.cfg <<'GRUB'
+set default=0
+set timeout=5
+
+if [ x$feature_default_font_path = xy ] ; then
+    font=unicode
+else
+    font=$prefix/unicode.pf2
+fi
+
+if loadfont $font ; then
+    set gfxmode=800x600
+    set gfxpayload=keep
+    insmod efi_gop
+    insmod efi_uga
+    insmod video_bochs
+    insmod video_cirrus
+else
+    set gfxmode=auto
+    insmod all_video
+fi
+
+insmod gfxterm
+insmod png
+
+source /boot/grub/theme.cfg
+
+terminal_output gfxterm
+GRUB
+log_detail "GRUB timeout set to 5 seconds"
 
 # --- Step 6: Build the ISO ---
 
