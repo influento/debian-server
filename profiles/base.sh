@@ -22,17 +22,19 @@ deploy_dotfiles() {
 
   log_info "Deploying dotfiles to ${dest}..."
 
-  # Ensure parent directory exists
-  mkdir -p "$(dirname "$dest")"
+  # Ensure parent directory exists (as the user, not root)
+  sudo -u "$USERNAME" mkdir -p "$(dirname "$dest")"
 
   if [[ -d "/root/dotfiles" ]]; then
-    # Custom ISO flow: bundled dotfiles already present
+    # Custom ISO flow: bundled dotfiles are in /root (root-readable only),
+    # so copy as root then fix ownership immediately
     log_info "Using bundled dotfiles from /root/dotfiles"
     cp -a "/root/dotfiles" "$dest"
+    chown -R "${USERNAME}:${USERNAME}" "$dest"
   else
-    # Standard flow: clone from remote
+    # Standard flow: clone as the user so files are correctly owned
     log_info "Cloning dotfiles from ${DOTFILES_REPO}..."
-    git clone "$DOTFILES_REPO" "$dest"
+    sudo -u "$USERNAME" git clone "$DOTFILES_REPO" "$dest"
   fi
 
   # Ensure the dotfiles repo remote points to the SSH URL for push/pull.
@@ -42,12 +44,9 @@ deploy_dotfiles() {
     current_remote="$(git -C "$dest" remote get-url origin 2>/dev/null || true)"
     if [[ "$current_remote" != "$DOTFILES_REPO" ]]; then
       log_info "Updating git remote to ${DOTFILES_REPO}"
-      git -C "$dest" remote set-url origin "$DOTFILES_REPO"
+      sudo -u "$USERNAME" git -C "$dest" remote set-url origin "$DOTFILES_REPO"
     fi
   fi
-
-  # Fix ownership (we're running as root in chroot)
-  chown -R "${USERNAME}:${USERNAME}" "/home/${USERNAME}/dev"
 
   # Run the dotfiles installer if present
   if [[ -f "${dest}/install.sh" ]]; then
