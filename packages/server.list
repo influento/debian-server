@@ -27,3 +27,9 @@ eza
 fd-find
 zoxide
 shellcheck
+starship
+fastfetch
+
+# Node.js (for dotfiles npm packages)
+nodejs
+npm

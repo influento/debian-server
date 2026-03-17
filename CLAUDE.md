@@ -53,7 +53,8 @@ The script auto-cleans previous VMs and kills stale QEMU processes on launch.
 Packages are in `packages/base.list` and `packages/server.list`. Key components:
 kernel, firmware, microcode, build-essential, sudo, NetworkManager, systemd-resolved,
 zsh, neovim, GRUB, openssh-server, nftables, fail2ban, Docker CE (official repo),
-btop, tmux, rsync, fzf, ripgrep, bat, eza, fd-find, zoxide, shellcheck.
+btop, tmux, rsync, fzf, ripgrep, bat, eza, fd-find, zoxide, shellcheck,
+starship, fastfetch, nodejs, npm.
 
 ## What Gets Configured
 

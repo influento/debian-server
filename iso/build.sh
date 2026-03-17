@@ -209,6 +209,9 @@ fi
 
 log_info "Generating output..."
 
+# Remove previous ISOs (keep only the latest build)
+rm -f "${OUTPUT_DIR}"/${ISO_LABEL}-*-amd64.iso "${OUTPUT_DIR}"/sha256sums.txt
+
 iso_date="$(date '+%Y.%m.%d')"
 iso_name="${ISO_LABEL}-${iso_date}-amd64.iso"
 
