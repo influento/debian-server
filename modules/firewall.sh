@@ -29,8 +29,13 @@ table inet filter {
         log prefix "nftables-drop: " counter drop
     }
 
-    # Forwarding: managed by Docker — do not add a forward chain here.
-    # Docker creates its own forwarding rules for container networking.
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+
+        # Allow Docker container traffic
+        iifname "docker0" accept
+        oifname "docker0" ct state established,related accept
+    }
 
     chain output {
         type filter hook output priority 0; policy accept;

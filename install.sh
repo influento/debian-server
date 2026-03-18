@@ -236,6 +236,17 @@ log_info "Configuring resolv.conf symlink..."
 rm -f "${MOUNT_POINT}/etc/resolv.conf"
 ln -s ../run/systemd/resolve/stub-resolv.conf "${MOUNT_POINT}/etc/resolv.conf"
 
+# Copy WiFi connection profiles from the live environment so the installed
+# system reconnects automatically on first boot.
+if compgen -G "/etc/NetworkManager/system-connections/*.nmconnection" >/dev/null 2>&1; then
+  log_info "Migrating WiFi connection profiles to installed system..."
+  mkdir -p "${MOUNT_POINT}/etc/NetworkManager/system-connections"
+  cp /etc/NetworkManager/system-connections/*.nmconnection \
+    "${MOUNT_POINT}/etc/NetworkManager/system-connections/"
+  chmod 600 "${MOUNT_POINT}/etc/NetworkManager/system-connections/"*.nmconnection
+  log_info "WiFi profiles copied — network should reconnect on first boot."
+fi
+
 # ===================================================================
 #  Cleanup and Reboot
 # ===================================================================

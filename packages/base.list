@@ -15,6 +15,9 @@ build-essential
 sudo
 locales
 network-manager
+wpasupplicant
+wireless-tools
+rfkill
 systemd-resolved
 
 # Shell
