@@ -134,14 +134,13 @@ log_info "Username: $USERNAME"
 # Hostname
 if [[ -z "$HOSTNAME" ]]; then
   if [[ "$AUTO_MODE" -eq 1 ]]; then
-    local_suffix="$(head -c 2 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-  else
-    local_suffix=$(prompt_input "Enter hostname suffix (e.g. home, lab, prod)" "")
-    if [[ -z "$local_suffix" ]]; then
-      local_suffix="$(head -c 2 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-    fi
+    die "AUTO_MODE requires HOSTNAME to be set via --hostname or config file."
   fi
-  HOSTNAME="${USERNAME}-server-${local_suffix}"
+  HOSTNAME=$(prompt_input "Enter hostname" "")
+  while [[ -z "$HOSTNAME" ]]; do
+    log_warn "Hostname cannot be empty."
+    HOSTNAME=$(prompt_input "Enter hostname" "")
+  done
 fi
 log_info "Hostname: $HOSTNAME"
 

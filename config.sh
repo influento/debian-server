@@ -17,7 +17,7 @@ AUTO_MODE="${AUTO_MODE:-0}"                   # 1 = unattended mode (skip confir
 PASSWORD="${PASSWORD:-}"                      # used in --auto mode for both root + user
 
 # --- System ---
-HOSTNAME="${HOSTNAME:-}"                      # prompted if empty; pattern: {username}-server-{suffix}
+HOSTNAME=""                                      # always prompt (shell sets HOSTNAME automatically)
 USERNAME="${USERNAME:-}"                       # non-root user (prompted if empty)
 TIMEZONE="${TIMEZONE:-UTC}"                   # UTC for servers
 LOCALE="${LOCALE:-en_US.UTF-8}"
