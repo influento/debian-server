@@ -91,6 +91,11 @@ live_packages=(
   neovim
   less
   openssh-server
+  network-manager
+  wpasupplicant
+  wireless-tools
+  rfkill
+  firmware-iwlwifi
 )
 
 for pkg in "${live_packages[@]}"; do
