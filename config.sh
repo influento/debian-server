@@ -34,7 +34,7 @@ ENABLE_DOCKER="${ENABLE_DOCKER:-true}"        # install Docker CE
 MIRROR_COUNTRY="${MIRROR_COUNTRY:-}"          # 2-letter country code for mirrors (auto-detected)
 
 # --- Dotfiles ---
-DOTFILES_REPO="${DOTFILES_REPO:-}"             # git URL (empty = skip dotfiles)
+DOTFILES_REPO="${DOTFILES_REPO:-https://github.com/influento/dotfiles.git}"
 DOTFILES_DEST="${DOTFILES_DEST:-}"             # auto-set to /home/$USERNAME/dev/infra/dotfiles
 
 # --- Paths (internal, don't override) ---
