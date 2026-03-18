@@ -51,6 +51,9 @@ lb config \
   --archive-areas "main contrib non-free-firmware" \
   --debian-installer none \
   --memtest none \
+  --apt-recommends false \
+  --firmware-chroot false \
+  --linux-flavours amd64 \
   --bootappend-live "boot=live components username=root console=tty0 console=ttyS0,115200" \
   --iso-application "$ISO_LABEL" \
   --iso-volume "$ISO_LABEL"
@@ -119,6 +122,7 @@ tar -C "$BUILD_DIR" \
   --exclude='iso/out' \
   --exclude='iso/work' \
   --exclude='tests/iso' \
+  --exclude='tests/vm' \
   --exclude='.claude' \
   -cf - . | tar -C "$local_dest" -xf -
 
