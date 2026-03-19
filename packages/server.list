@@ -20,6 +20,7 @@ tmux
 rsync
 
 # CLI essentials
+gh
 fzf
 ripgrep
 bat

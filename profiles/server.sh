@@ -11,6 +11,7 @@ log_section "Server Profile"
 install_packages_from_list "${INSTALLER_DIR}/packages/server.list"
 
 # Run server modules
+source "${INSTALLER_DIR}/modules/neovim.sh"
 source "${INSTALLER_DIR}/modules/ssh.sh"
 source "${INSTALLER_DIR}/modules/firewall.sh"
 if [[ "${ENABLE_DOCKER}" == "true" ]]; then

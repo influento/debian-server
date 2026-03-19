@@ -24,8 +24,7 @@ systemd-resolved
 # Shell
 zsh
 
-# Editor
-neovim
+# Editor — neovim installed via modules/neovim.sh (GitHub binary release)
 
 # Filesystem tools
 e2fsprogs
