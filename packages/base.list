@@ -5,6 +5,7 @@
 linux-image-amd64
 linux-headers-amd64
 firmware-linux
+firmware-iwlwifi
 
 # CPU microcode (both included, only matching CPU loads at boot)
 amd64-microcode

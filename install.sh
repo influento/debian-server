@@ -240,9 +240,13 @@ ln -s ../run/systemd/resolve/stub-resolv.conf "${MOUNT_POINT}/etc/resolv.conf"
 if compgen -G "/etc/NetworkManager/system-connections/*.nmconnection" >/dev/null 2>&1; then
   log_info "Migrating WiFi connection profiles to installed system..."
   mkdir -p "${MOUNT_POINT}/etc/NetworkManager/system-connections"
-  cp /etc/NetworkManager/system-connections/*.nmconnection \
-    "${MOUNT_POINT}/etc/NetworkManager/system-connections/"
-  chmod 600 "${MOUNT_POINT}/etc/NetworkManager/system-connections/"*.nmconnection
+  for profile in /etc/NetworkManager/system-connections/*.nmconnection; do
+    dest="${MOUNT_POINT}/etc/NetworkManager/system-connections/$(basename "$profile")"
+    cp "$profile" "$dest"
+    # Strip interface-name so the profile works regardless of device naming
+    sed -i '/^interface-name=/d' "$dest"
+    chmod 600 "$dest"
+  done
   log_info "WiFi profiles copied — network should reconnect on first boot."
 fi
 
