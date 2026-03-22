@@ -32,9 +32,14 @@ table inet filter {
     chain forward {
         type filter hook forward priority 0; policy drop;
 
-        # Allow Docker container traffic
+        # Allow established/related forwarded traffic
+        ct state established,related accept
+
+        # Allow Docker container traffic (default bridge + custom networks)
         iifname "docker0" accept
-        oifname "docker0" ct state established,related accept
+        iifname "br-*" accept
+        oifname "docker0" accept
+        oifname "br-*" accept
     }
 
     chain output {
