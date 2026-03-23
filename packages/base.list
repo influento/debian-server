@@ -20,6 +20,7 @@ wpasupplicant
 wireless-tools
 rfkill
 systemd-resolved
+systemd-timesyncd
 
 # Shell
 zsh

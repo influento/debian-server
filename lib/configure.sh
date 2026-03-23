@@ -12,6 +12,7 @@ configure_system() {
   configure_dns
   configure_initramfs
   configure_bootloader
+  configure_ntp
   configure_users
   configure_sudo
 }
@@ -95,6 +96,12 @@ configure_dns() {
   # chroot may bind-mount the host's /etc/resolv.conf for DNS during chroot.
 
   log_info "DNS configured (systemd-resolved + NetworkManager)."
+}
+
+configure_ntp() {
+  log_info "Enabling NTP time synchronization..."
+  run_logged "Enabling systemd-timesyncd" systemctl enable systemd-timesyncd
+  log_info "NTP configured (systemd-timesyncd)."
 }
 
 configure_initramfs() {
