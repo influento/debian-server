@@ -45,6 +45,7 @@ manpages
 
 # Misc essentials
 git
+git-lfs
 curl
 wget
 less
