@@ -62,6 +62,7 @@ starship, fastfetch, nodejs, npm.
 - **System**: UTC, en_US.UTF-8, GRUB UEFI, initramfs-tools, systemd-resolved
 - **SSH**: hardened config in `/etc/ssh/sshd_config.d/10-hardened.conf`
 - **Firewall**: nftables — drop incoming, allow SSH/ICMP/established, allow outgoing
+  (Docker `-p` published ports bypass this — see docs/TODO.md "Security Hardening")
 - **Docker**: Docker CE from official repo, user added to docker group
 - **User**: root + non-root user with sudo group (NOPASSWD), zsh shell
 - **Dotfiles**: deployed from `DOTFILES_REPO` to `~/dev/infra/dotfiles`, runs `install.sh --profile server`

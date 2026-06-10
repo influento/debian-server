@@ -33,53 +33,50 @@ run_in_chroot() {
     done
   fi
 
-  # Build the wrapper that sources everything and runs the target script
-  local wrapper
-  wrapper=$(cat <<CHROOT_EOF
-#!/usr/bin/env bash
-set -euo pipefail
-
-export INSTALLER_DIR="${chroot_installer}"
-export LOG_FILE="${LOG_FILE}"
-export HOSTNAME="${HOSTNAME}"
-export USERNAME="${USERNAME}"
-export TIMEZONE="${TIMEZONE}"
-export LOCALE="${LOCALE}"
-export KEYMAP="${KEYMAP}"
-export BOOTLOADER="${BOOTLOADER}"
-export FS_TYPE="${FS_TYPE}"
-export SWAP_SIZE="${SWAP_SIZE}"
-export EDITOR="${EDITOR}"
-export ENABLE_DOCKER="${ENABLE_DOCKER}"
-export DEBIAN_RELEASE="${DEBIAN_RELEASE}"
-export MOUNT_POINT=""
-export PART_EFI="${PART_EFI:-}"
-export PART_SWAP="${PART_SWAP:-}"
-export PART_ROOT="${PART_ROOT:-}"
-export DOTFILES_REPO="${DOTFILES_REPO:-}"
-export DOTFILES_DEST="${DOTFILES_DEST:-}"
-export AUTO_MODE="${AUTO_MODE:-0}"
-export MIRROR_COUNTRY="${MIRROR_COUNTRY:-}"
-export PROFILE="server"
-export DEBUG="${DEBUG:-0}"
-
-# Source libraries
-source "\${INSTALLER_DIR}/lib/log.sh"
-source "\${INSTALLER_DIR}/lib/ui.sh"
-source "\${INSTALLER_DIR}/lib/packages.sh"
-source "\${INSTALLER_DIR}/lib/services.sh"
-
-# Source the target script (loads functions or executes top-level code)
-source "\${INSTALLER_DIR}/${script}"
-
-# Run any extra commands passed as arguments
-${extra}
-CHROOT_EOF
-  )
-
-  # Write wrapper to a file and execute it (instead of piping to bash).
+  # Write the wrapper that sources everything and runs the target script.
+  # Every value is emitted with printf %q so a value containing spaces or shell
+  # metacharacters cannot break out of (or inject into) the generated script.
   local wrapper_file="${MOUNT_POINT}${chroot_installer}/.chroot-wrapper.sh"
-  printf '%s' "$wrapper" > "$wrapper_file"
+  {
+    printf '%s\n' '#!/usr/bin/env bash'
+    printf '%s\n\n' 'set -euo pipefail'
+
+    printf 'export INSTALLER_DIR=%q\n' "$chroot_installer"
+    printf 'export LOG_FILE=%q\n' "$LOG_FILE"
+    printf 'export HOSTNAME=%q\n' "$HOSTNAME"
+    printf 'export USERNAME=%q\n' "$USERNAME"
+    printf 'export TIMEZONE=%q\n' "$TIMEZONE"
+    printf 'export LOCALE=%q\n' "$LOCALE"
+    printf 'export KEYMAP=%q\n' "$KEYMAP"
+    printf 'export BOOTLOADER=%q\n' "$BOOTLOADER"
+    printf 'export FS_TYPE=%q\n' "$FS_TYPE"
+    printf 'export SWAP_SIZE=%q\n' "$SWAP_SIZE"
+    printf 'export ENABLE_DOCKER=%q\n' "$ENABLE_DOCKER"
+    printf 'export DEBIAN_RELEASE=%q\n' "$DEBIAN_RELEASE"
+    printf 'export MOUNT_POINT=%q\n' ""
+    printf 'export PART_EFI=%q\n' "${PART_EFI:-}"
+    printf 'export PART_SWAP=%q\n' "${PART_SWAP:-}"
+    printf 'export PART_ROOT=%q\n' "${PART_ROOT:-}"
+    printf 'export DOTFILES_REPO=%q\n' "${DOTFILES_REPO:-}"
+    printf 'export DOTFILES_DEST=%q\n' "${DOTFILES_DEST:-}"
+    printf 'export AUTO_MODE=%q\n' "${AUTO_MODE:-0}"
+    printf 'export MIRROR_COUNTRY=%q\n' "${MIRROR_COUNTRY:-}"
+    printf 'export PROFILE=%q\n' "server"
+    printf 'export DEBUG=%q\n' "${DEBUG:-0}"
+    printf 'export DEBIAN_FRONTEND=%q\n' "noninteractive"
+
+    printf '\n%s\n' '# Source libraries'
+    printf 'source %q\n' "${chroot_installer}/lib/log.sh"
+    printf 'source %q\n' "${chroot_installer}/lib/ui.sh"
+    printf 'source %q\n' "${chroot_installer}/lib/packages.sh"
+    printf 'source %q\n' "${chroot_installer}/lib/services.sh"
+
+    printf '\n%s\n' '# Source the target script (loads functions or executes top-level code)'
+    printf 'source %q\n' "${chroot_installer}/${script}"
+
+    printf '\n%s\n' '# Run any extra commands passed as arguments'
+    printf '%s' "$extra"
+  } > "$wrapper_file"
   chmod +x "$wrapper_file"
 
   log_debug "Entering chroot to run: $script $extra"

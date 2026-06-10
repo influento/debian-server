@@ -166,6 +166,6 @@ configure_sudo() {
 
   # Set default editor for visudo
   mkdir -p /etc/sudoers.d
-  echo "Defaults editor=/usr/bin/${EDITOR}" > /etc/sudoers.d/00-editor
+  echo "Defaults editor=/usr/bin/editor" > /etc/sudoers.d/00-editor
   chmod 440 /etc/sudoers.d/00-editor
 }

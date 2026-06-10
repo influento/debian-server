@@ -25,6 +25,16 @@ gpg --dearmor -o /etc/apt/keyrings/docker.gpg < "$gpg_tmp"
 chmod a+r /etc/apt/keyrings/docker.gpg
 rm -f "$gpg_tmp"
 
+# Verify the downloaded key matches Docker's published fingerprint before
+# trusting the repo (guards against a tampered/MITM'd key).
+docker_expected_fpr="9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+docker_actual_fpr="$(gpg --show-keys --with-colons /etc/apt/keyrings/docker.gpg 2>/dev/null \
+  | awk -F: '/^fpr:/{print $10; exit}')"
+if [[ "$docker_actual_fpr" != "$docker_expected_fpr" ]]; then
+  die "Docker GPG key fingerprint mismatch (expected ${docker_expected_fpr}, got ${docker_actual_fpr:-none})."
+fi
+log_info "Docker GPG key fingerprint verified."
+
 # Add Docker repository for the configured release
 write_docker_source "$DEBIAN_RELEASE"
 

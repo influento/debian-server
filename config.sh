@@ -27,7 +27,6 @@ KEYMAP="${KEYMAP:-us}"
 BOOTLOADER="${BOOTLOADER:-grub}"             # GRUB (UEFI only)
 
 # --- Software ---
-EDITOR="${EDITOR:-nvim}"                      # default editor for visudo, git, etc.
 ENABLE_DOCKER="${ENABLE_DOCKER:-true}"        # install Docker CE
 
 # --- Mirrors ---

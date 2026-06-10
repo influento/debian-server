@@ -61,6 +61,10 @@ partition_disk() {
   PART_ROOT="${prefix}3"
 
   run_logged "Reloading partition table" partprobe "$TARGET_DISK"
+
+  # Wait for udev to create the partition device nodes before formatting them
+  udevadm settle || true
+
   log_info "Partitions: EFI=$PART_EFI SWAP=$PART_SWAP ROOT=$PART_ROOT"
 }
 

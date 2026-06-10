@@ -12,6 +12,22 @@ local_tarball="/tmp/nvim-linux-x86_64.tar.gz"
 run_logged "Downloading Neovim" \
   curl -fsSL -o "$local_tarball" "$NEOVIM_URL"
 
+# Verify integrity against the SHA256 digest GitHub publishes for the release
+# asset. Fails closed on a real mismatch; warns and continues only if the digest
+# can't be fetched (so a transient API hiccup doesn't block the whole install).
+nvim_expected="$(curl -fsSL --max-time 25 "https://api.github.com/repos/neovim/neovim/releases/tags/stable" 2>/dev/null \
+  | awk '/"name": *"nvim-linux-x86_64\.tar\.gz"/{f=1} f&&/"digest":/{gsub(/.*sha256:|".*/,"");print;exit}')"
+if [[ "$nvim_expected" =~ ^[0-9a-f]{64}$ ]]; then
+  nvim_actual="$(sha256sum "$local_tarball" | awk '{print $1}')"
+  if [[ "$nvim_actual" != "$nvim_expected" ]]; then
+    rm -f "$local_tarball"
+    die "Neovim tarball checksum mismatch (expected ${nvim_expected}, got ${nvim_actual})."
+  fi
+  log_info "Neovim checksum verified (GitHub release digest)."
+else
+  log_warn "Could not obtain Neovim release digest — proceeding on HTTPS trust only."
+fi
+
 # Extract to /opt/nvim (remove previous install if upgrading)
 if [[ -d "$NEOVIM_INSTALL_DIR" ]]; then
   rm -rf "$NEOVIM_INSTALL_DIR"

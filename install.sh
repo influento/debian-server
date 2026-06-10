@@ -79,6 +79,29 @@ mkdir -p "$(dirname "$LOG_FILE")"
 log_info "Debian Server Installer started"
 log_info "Log file: $LOG_FILE"
 
+# --- Failure cleanup (shred secrets + unmount target on early exit) ---
+
+_INSTALL_COMPLETE=0
+_CHANGES_STARTED=0
+_PASS_FILE=""
+
+_cleanup_on_exit() {
+  local rc=$?
+  [[ "$_INSTALL_COMPLETE" -eq 1 ]] && return 0
+  # Shred a leftover plaintext password file if one was written
+  if [[ -n "$_PASS_FILE" && -f "$_PASS_FILE" ]]; then
+    log_warn "Installer exited early — shredding leftover password file."
+    shred -u "$_PASS_FILE" 2>/dev/null || rm -f "$_PASS_FILE"
+  fi
+  # Only touch mounts/swap once disk operations have actually begun
+  if [[ "$_CHANGES_STARTED" -eq 1 ]]; then
+    log_warn "Cleaning up target mounts/swap after early exit (code $rc)."
+    swapoff -a 2>/dev/null || true
+    umount -R "$MOUNT_POINT" 2>/dev/null || true
+  fi
+}
+trap _cleanup_on_exit EXIT
+
 # --- Preflight ---
 
 run_preflight_checks
@@ -87,18 +110,17 @@ run_preflight_checks
 
 if [[ -z "$MIRROR_COUNTRY" ]]; then
   log_info "Detecting location..."
-  _geo_json="$(curl -sf --max-time 5 "https://ipapi.co/json/" 2>/dev/null)" || _geo_json=""
+  _GEO_COUNTRY=""
 
-  # Fallback to ip-api.com
-  if [[ -z "$_geo_json" ]]; then
-    _geo_json="$(curl -sf --max-time 5 "http://ip-api.com/json/?fields=countryCode" 2>/dev/null)" || _geo_json=""
+  # Primary: ipapi.co (HTTPS, JSON)
+  _geo_json="$(curl -sf --max-time 5 "https://ipapi.co/json/" 2>/dev/null)" || _geo_json=""
+  if [[ -n "$_geo_json" ]]; then
+    _GEO_COUNTRY="$(printf '%s' "$_geo_json" | sed -n 's/.*"country_code": *"\([^"]*\)".*/\1/p')"
   fi
 
-  _GEO_COUNTRY=""
-  if [[ -n "$_geo_json" ]]; then
-    # ipapi.co uses "country_code", ip-api.com uses "countryCode" — try both
-    _GEO_COUNTRY="$(printf '%s' "$_geo_json" | sed -n 's/.*"country_code": *"\([^"]*\)".*/\1/p')"
-    [[ -z "$_GEO_COUNTRY" ]] && _GEO_COUNTRY="$(printf '%s' "$_geo_json" | sed -n 's/.*"countryCode": *"\([^"]*\)".*/\1/p')"
+  # Fallback: Cloudflare trace (HTTPS, exposes a "loc=XX" line) — avoids plaintext HTTP
+  if [[ -z "$_GEO_COUNTRY" ]]; then
+    _GEO_COUNTRY="$(curl -sf --max-time 5 "https://www.cloudflare.com/cdn-cgi/trace" 2>/dev/null | sed -n 's/^loc=\([A-Z][A-Z]\)$/\1/p')"
   fi
 
   # Validate country code (exactly 2 uppercase letters)
@@ -118,29 +140,35 @@ fi
 
 log_section "Configuration"
 
-# Username
+# Username — POSIX-ish: start with a letter or '_', then letters/digits/'-'/'_', max 32
+_USERNAME_RE='^[a-z_][a-z0-9_-]{0,31}$'
 if [[ -z "$USERNAME" ]]; then
   if [[ "$AUTO_MODE" -eq 1 ]]; then
     die "AUTO_MODE requires USERNAME to be set via --user or config file."
   fi
   USERNAME=$(prompt_input "Enter non-root username" "")
-  while [[ -z "$USERNAME" ]]; do
-    log_warn "Username cannot be empty."
+  while [[ ! "$USERNAME" =~ $_USERNAME_RE ]]; do
+    log_warn "Invalid username. Use a-z, 0-9, '-', '_'; start with a letter or '_'; max 32 chars."
     USERNAME=$(prompt_input "Enter non-root username" "")
   done
+elif [[ ! "$USERNAME" =~ $_USERNAME_RE ]]; then
+  die "Invalid username '$USERNAME'. Use a-z, 0-9, '-', '_'; start with a letter or '_'; max 32 chars."
 fi
 log_info "Username: $USERNAME"
 
-# Hostname
+# Hostname — RFC 1123 label: alphanumerics plus '-'/'.', start/end alphanumeric, max 63
+_HOSTNAME_RE='^[a-zA-Z0-9]([a-zA-Z0-9.-]{0,61}[a-zA-Z0-9])?$'
 if [[ -z "$HOSTNAME" ]]; then
   if [[ "$AUTO_MODE" -eq 1 ]]; then
     die "AUTO_MODE requires HOSTNAME to be set via --hostname or config file."
   fi
   HOSTNAME=$(prompt_input "Enter hostname" "")
-  while [[ -z "$HOSTNAME" ]]; do
-    log_warn "Hostname cannot be empty."
+  while [[ ! "$HOSTNAME" =~ $_HOSTNAME_RE ]]; do
+    log_warn "Invalid hostname. Use letters, digits, '-', '.'; start/end alphanumeric; max 63 chars."
     HOSTNAME=$(prompt_input "Enter hostname" "")
   done
+elif [[ ! "$HOSTNAME" =~ $_HOSTNAME_RE ]]; then
+  die "Invalid hostname '$HOSTNAME'. Use letters, digits, '-', '.'; start/end alphanumeric; max 63 chars."
 fi
 log_info "Hostname: $HOSTNAME"
 
@@ -200,6 +228,7 @@ fi
 #  Phase 1: Disk + Base System (live ISO environment)
 # ===================================================================
 
+_CHANGES_STARTED=1
 setup_disk
 bootstrap_base_system
 
@@ -211,7 +240,7 @@ mount_chroot_filesystems
 
 # Pass passwords into chroot via temp file (mode 0600, deleted after use)
 _PASS_FILE="${MOUNT_POINT}/root/.install-passwords"
-printf '%s\n%s\n' "$_ROOT_PASS" "$_USER_PASS" > "$_PASS_FILE"
+( umask 077; printf '%s\n%s\n' "$_ROOT_PASS" "$_USER_PASS" > "$_PASS_FILE" )
 chmod 600 "$_PASS_FILE"
 _ROOT_PASS="" _USER_PASS=""
 unset _ROOT_PASS _USER_PASS
@@ -259,6 +288,10 @@ log_section "Installation Complete"
 umount_chroot_filesystems
 
 cleanup_chroot
+
+# Past the last secret/mount cleanup — disarm the failure trap so the EXIT
+# handler stays out of the normal reboot path.
+_INSTALL_COMPLETE=1
 
 log_info "Installation finished successfully!"
 log_info "Log saved to: ${MOUNT_POINT}${LOG_FILE}"
